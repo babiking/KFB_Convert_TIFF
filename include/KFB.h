@@ -1,4 +1,6 @@
 // !Created by babiking@sensetime on May 10th, 2018 for .kfb file format conversion...
+//  reference: [1]https://blog.csdn.net/ameyume/article/details/6326278
+//             [2]https://blog.csdn.net/loveyaqin1990/article/details/40015731
 
 #ifndef KFB_CONVERT_KFB_H
 #define KFB_CONVERT_KFB_H

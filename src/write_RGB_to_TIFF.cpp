@@ -51,14 +51,14 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
     // !Set .TIFF file attributes
     TIFFSetField(TIFF_file, TIFFTAG_IMAGEWIDTH,      nImageWidth);
     TIFFSetField(TIFF_file, TIFFTAG_IMAGELENGTH,     nImageHeight);
-    TIFFSetField(TIFF_file, TIFFTAG_TILELENGTH,      nTileHeight);
-    TIFFSetField(TIFF_file, TIFFTAG_TILEWIDTH,       nTileWidth);
+    // TIFFSetField(TIFF_file, TIFFTAG_TILELENGTH,      nTileHeight);
+    // TIFFSetField(TIFF_file, TIFFTAG_TILEWIDTH,       nTileWidth);
     TIFFSetField(TIFF_file, TIFFTAG_PLANARCONFIG,    PLANARCONFIG_CONTIG);
     TIFFSetField(TIFF_file, TIFFTAG_BITSPERSAMPLE,   BPP);
     TIFFSetField(TIFF_file, TIFFTAG_SAMPLESPERPIXEL, SPP);
     TIFFSetField(TIFF_file, TIFFTAG_COMPRESSION,     COMPRESSION_NONE);
 
-    // TIFFSetField(TIFF_file, TIFFTAG_ROWSPERSTRIP, 1);
+    TIFFSetField(TIFF_file, TIFFTAG_ROWSPERSTRIP, nImageHeight);
     TIFFSetField(TIFF_file, TIFFTAG_PHOTOMETRIC,  PHOTOMETRIC_RGB);
     TIFFSetField(TIFF_file, TIFFTAG_FILLORDER,    FILLORDER_MSB2LSB);
     TIFFSetField(TIFF_file, TIFFTAG_XRESOLUTION, 1);
@@ -67,6 +67,7 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
 
 
     unsigned long nPixels = nTileHeight*nTileWidth;
+    /*
     // !Write into .tiff file in tile-orientation
     for(int ch=0; ch<SPP; ch++)
         for(int w=0; w<nTileWidth; w++)
@@ -75,6 +76,8 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
                 TIFFWriteTile(TIFF_file, &(RGB_stream[ch*nPixels + w*nTileHeight + h]), h, w, 0, ch);
 
         }
+    */
+    TIFFWriteEncodedStrip(TIFF_file, 0, RGB_stream, nPixels*3);
 
     _TIFFfree(RGB_stream);
     TIFFClose(TIFF_file);

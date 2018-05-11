@@ -86,7 +86,7 @@ int main() {
     char* getImageRGBDataStreamRet = GetImageRGBDataStream(sImageInfo, fScale, nRgbPosX, nRgbPosY, rgbDataLength, nRgbWidth, nRgbHeight, rgbStream);
     printf("The data length of RGB image is: %d\n",*rgbDataLength);
 
-    // _write_RGB_to_TIFF(*rgbStream, "test.tiff", *rgbDataLength, *nRgbHeight, *nRgbWidth, *nRgbHeight, *nRgbWidth);
+    _write_RGB_to_TIFF(*rgbStream, "test.tiff", *rgbDataLength, *nRgbHeight, *nRgbWidth, *nRgbHeight, *nRgbWidth);
 
 
 
