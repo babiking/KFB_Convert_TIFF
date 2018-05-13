@@ -10,6 +10,6 @@
 
 using namespace std;
 
-int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char*  TIFF_filename, int nDataLength, int nImageHeight, int nImageWidth, int nTileHeight, int nTileWidth, int nTileIndex);
+int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char*  TIFF_filename, int nDataLength, int nHeightTiles, int nWidthTiles, int nTileHeight, int nTileWidth);
 
 #endif //KFB_CONVERT_WRITE_RGB_TO_TIFF_H

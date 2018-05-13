@@ -4,6 +4,11 @@
 
 int main() {
 
+    clock_t startTime, endTime;
+    double  runTime;
+
+    startTime = clock();
+
     void *handle = NULL;
 
     const char* kfb_filename = "../data/test.kfb";
@@ -51,14 +56,14 @@ int main() {
     int getHeaderInfoRet = GetHeaderInfo(sImageInfo, khiImageHeight, khiImageWidth, khiScanScale, khiSpendTime, khiScanTime, khiImageCapRes, khiImageBlockSize);
 
 
-
+    /*
     // !Get ROI area within the .kfb image
     *(void* *)&GetImageDataRoi = dlsym(handle,"GetImageDataRoiFunc");
     float fScale = 20.0;
     KFB_INT32 ROI_x = 10240;
     KFB_INT32 ROI_y = 10240;
-    KFB_INT32 nRoiHeight = 256;
-    KFB_INT32 nRoiWidth  = 256;
+    KFB_INT32 nRoiHeight = 2560;
+    KFB_INT32 nRoiWidth  = 2560;
     BYTE** pRoiBuffer = (BYTE**)malloc(sizeof(BYTE*));
     int* roiDataLength = (int*)malloc(sizeof(int));
     bool roiFlag = true;
@@ -69,25 +74,51 @@ int main() {
     // !Write ROI Data into .jpg file...
     FILE* f_ROI;
     f_ROI = fopen("test_ROI.jpg", "wb+");
-    printf("The data length of ROI image is: %d\n",*roiDataLength);
+    // printf("The data length of ROI image is: %d\n",*roiDataLength);
     fwrite( *pRoiBuffer, sizeof(BYTE), *roiDataLength, f_ROI);
     fclose( f_ROI );
-
+    */
 
 
     // !Get original RGB image data stream
     *(void* *)&GetImageRGBDataStream = dlsym(handle,"GetImageRGBDataStreamFunc");
-    KFB_INT32 nRgbPosX = 10240;
-    KFB_INT32 nRgbPosY = 10240;
-    KFB_INT32* rgbDataLength  = (KFB_INT32*)malloc(sizeof(KFB_INT32));
+    // !GetImageRGBDataStreamFunc inputs
+    float fScale = 20.0;
+    int nWidthTiles = 10;
+    int nHeightTiles = 10;
+    int32 nTileSize = (*khiImageBlockSize)*(*khiImageBlockSize)*3;
+    int32 nTiles = nWidthTiles * nHeightTiles;
+    BYTE* rgbMemStream = (BYTE*)malloc(sizeof(BYTE)*nTileSize*nTiles);
+
+    // !GetImageRGBDataStreamFunc returns
     KFB_INT32* nRgbWidth  = (KFB_INT32*)malloc(sizeof(KFB_INT32));
     KFB_INT32* nRgbHeight = (KFB_INT32*)malloc(sizeof(KFB_INT32));
+    KFB_INT32* rgbDataLength  = (KFB_INT32*)malloc(sizeof(KFB_INT32));
+
+    // !Tile position at current crop
+    int nTileIndex;
+    KFB_INT32 nRgbPosH;
+    KFB_INT32 nRgbPosW;
+    KFB_INT32 nRgbPosOffsetH = 10240;
+    KFB_INT32 nRgbPosOffsetW = 10240;
+
     BYTE** rgbStream = (BYTE**)malloc(sizeof(BYTE*));
-    char* getImageRGBDataStreamRet = GetImageRGBDataStream(sImageInfo, fScale, nRgbPosX, nRgbPosY, rgbDataLength, nRgbWidth, nRgbHeight, rgbStream);
-    printf("The data length of RGB image is: %d\n",*rgbDataLength);
+    for(int th=0; th<nHeightTiles; th++)
+        for(int tw=0; tw<nWidthTiles; tw++){
 
+            nTileIndex = tw*nHeightTiles + th;
 
-    _write_RGB_to_TIFF(*rgbStream, "test.tiff", *rgbDataLength, 256, 256, *nRgbHeight, *nRgbWidth, 0);
+            // !Left-top corner of tile
+            nRgbPosH = th*(*khiImageBlockSize) + nRgbPosOffsetH;
+            nRgbPosW = tw*(*khiImageBlockSize) + nRgbPosOffsetW;
+
+            char* getImageRGBDataStreamRet = GetImageRGBDataStream(sImageInfo, fScale, nRgbPosH, nRgbPosW, rgbDataLength, nRgbWidth, nRgbHeight, rgbStream);
+
+            memcpy(rgbMemStream + nTileIndex*nTileSize, *rgbStream, nTileSize);
+
+    }
+    _write_RGB_to_TIFF(rgbMemStream, "test.tiff", *rgbDataLength, nHeightTiles, nWidthTiles, *nRgbHeight, *nRgbWidth);
+
 
 
 
@@ -100,6 +131,10 @@ int main() {
     // !Close the image file
     *(void* *)&UnInitImageFile = dlsym(handle, "UnInitImageFileFunc");
     UnInitImageFile(sImageInfo);
+
+    endTime = clock();
+    runTime = double(endTime - startTime) / CLOCKS_PER_SEC;
+    printf("!Total runtime is %f seconds.\n", runTime);
 
     return 0;
 

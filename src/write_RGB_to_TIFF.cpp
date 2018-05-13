@@ -2,7 +2,7 @@
 
 #include "write_RGB_to_TIFF.h"
 
-int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int nDataLength, int nImageHeight, int nImageWidth, int nTileHeight, int nTileWidth, int nTileIndex){
+int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int nDataLength, int nHeightTiles, int nWidthTiles, int nTileHeight, int nTileWidth){
 
     /*
      *  Function:
@@ -38,7 +38,10 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
      *          c. SamplePackaged: Contiguously or Separately (all the tiles for sample_0 appear before that of sample_1)
      *
      */
+    clock_t startTime, endTime;
+    double  runTime;
 
+    startTime = clock();
 
     TIFF* TIFF_file = TIFFOpen(TIFF_filename, "wb+");
 
@@ -49,8 +52,8 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
     int BPP = 8;
 
     // !Set .TIFF file attributes
-    TIFFSetField(TIFF_file, TIFFTAG_IMAGEWIDTH,      nImageWidth);
-    TIFFSetField(TIFF_file, TIFFTAG_IMAGELENGTH,     nImageHeight);
+    TIFFSetField(TIFF_file, TIFFTAG_IMAGEWIDTH,      nWidthTiles*nTileWidth);
+    TIFFSetField(TIFF_file, TIFFTAG_IMAGELENGTH,     nHeightTiles*nTileHeight);
     TIFFSetField(TIFF_file, TIFFTAG_TILELENGTH,      nTileHeight);
     TIFFSetField(TIFF_file, TIFFTAG_TILEWIDTH,       nTileWidth);
     TIFFSetField(TIFF_file, TIFFTAG_PLANARCONFIG,    PLANARCONFIG_CONTIG);
@@ -65,13 +68,25 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
     // TIFFSetField(TIFF_file, TIFFTAG_YRESOLUTION, 1);
     // TIFFSetField(TIFF_file, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
 
+    int nTileIndex;
+    for(int th=0; th<nHeightTiles; th++)
+        for(int tw=0; tw<nWidthTiles; tw++){
 
-    // !Write into .tiff file in tile-orientation
-    TIFFWriteRawTile(TIFF_file, nTileIndex, RGB_stream, nDataLength);
+            nTileIndex = tw*nHeightTiles + th;
+
+            // !Write into .tiff file in tile-orientation
+            TIFFWriteRawTile(TIFF_file, nTileIndex, RGB_stream+nTileIndex*(nDataLength), nDataLength);
+
+    }
 
 
     _TIFFfree(RGB_stream);
     TIFFClose(TIFF_file);
+
+    endTime = clock();
+    runTime = double(endTime - startTime) / (CLOCKS_PER_SEC);
+
+    printf("!Runtime to write tiles into .tiff file is %f.\n", runTime);
 
     return 0;
 
