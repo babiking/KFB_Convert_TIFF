@@ -20,6 +20,8 @@ typedef signed int KFB_INT32;
 #define DLL_API extern "C"
 
 struct kfbslide_t;
+struct kfbslide_info;
+struct kfbslide_ops;
 
 extern "C"{
 

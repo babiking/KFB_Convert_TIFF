@@ -8,7 +8,7 @@ link_directories(lib)
 
 set(SRC_FILES src/kfbslide.cpp)
 
-add_library(kfbslide SHARED ${SRC_FILES})
+add_library(kfbslide SHARED ${SRC_FILES} include/kfbslide.h)
 
 add_executable(KFBSlide_Cpp main.cpp ${SRC_FILES})
 target_link_libraries(KFBSlide_Cpp ImageOperationLib dl tiff)
