@@ -1,13 +1,17 @@
-// !Created by babiking@sensetime on May 10th, 2018 for .kfb file format conversion...
+// !Created by babiking on May 10th, 2018 for .kfb file format conversion...
 //  reference: [1]https://blog.csdn.net/ameyume/article/details/6326278
 //             [2]https://blog.csdn.net/loveyaqin1990/article/details/40015731
 
-#ifndef KFB_CONVERT_KFB_H
-#define KFB_CONVERT_KFB_H
+#ifndef KFB_CONVERT_TIFF_KFB_H
+#define KFB_CONVERT_TIFF_KFB_H
 
 #include <stdio.h>
 #include <string.h>
 #include <dlfcn.h>
+
+typedef void *LPVOID;
+typedef unsigned char BYTE;
+typedef signed int KFB_INT32;
 
 // !Create IMAGE_INFO_STRUCT to store pointer to file...
 typedef struct IMAGE_INFO_STRUCT{
@@ -18,13 +22,31 @@ typedef struct IMAGE_INFO_STRUCT{
 
 
 
-typedef void *LPVOID;
-typedef unsigned char BYTE;
-typedef signed int KFB_INT32;
+typedef struct HEADER_INFO_STRUCT
+{
+	KFB_INT32 Height;    
+    KFB_INT32 Width;     
+    KFB_INT32 ScanScale;      
+    float     SpendTime;      
+    double    ScanTime;      
+    float     CapRes;
+    KFB_INT32 BlockSize;
+	
+}HeaderInfoStruct;
 
 
 
-// !Define the functionType of InitImageFileFunc
+typedef struct POS_IDX_STRUCT
+{
+	KFB_INT32 x;
+	KFB_INT32 y;
+	KFB_INT32 width;
+	KFB_INT32 height;
+}PosIdxStruct;
+
+
+
+// !Declare the functionType of InitImageFileFunc
 /*
  *  Function:
  *      InitImageFileFunc(ImageInfoStruct sImageInfo,
@@ -40,12 +62,12 @@ typedef signed int KFB_INT32;
  *
  */
 typedef int (*DLLInitImageFileFunc)(ImageInfoStruct*, const char*);
-// !Create a function pointer to InitImageFileFunc...
-DLLInitImageFileFunc InitImageFile;
 
 
 
-// !Define the functionType of GetHeaderInfoFunc
+
+
+// !Declare the functionType of GetHeaderInfoFunc
 /*
  *  Function:
  *      int GetHeaderInfoFunc(ImageInfoStruct sImageInfo,
@@ -67,11 +89,11 @@ DLLInitImageFileFunc InitImageFile;
  *      [7] <KFB_INT32> khiImageBlockSize: size of scanning block
  */
 typedef int (*DLLGetHeaderInfoFunc)(ImageInfoStruct*, KFB_INT32*, KFB_INT32*, KFB_INT32*, float*, double*, float*, KFB_INT32*);
-DLLGetHeaderInfoFunc GetHeaderInfo;
 
 
 
-// !Create the functionType of GetImageDataRoiFunc
+
+// !Decalare the functionType of GetImageDataRoiFunc
 /*
  *  Function:
  *      int GetImageDataRoiFunc(ImageInfoStruct sImageInfo,
@@ -97,12 +119,12 @@ DLLGetHeaderInfoFunc GetHeaderInfo;
  *
  */
 typedef int (*DLLGetImageDataRoiFunc)(ImageInfoStruct*, float, KFB_INT32, KFB_INT32, KFB_INT32, KFB_INT32, BYTE**, KFB_INT32*, bool);
-DLLGetImageDataRoiFunc GetImageDataRoi;
 
 
 
 
-// !Create the functionType of GetRGBDataStreamFunc
+
+// !Declare the functionType of GetRGBDataStreamFunc
 /*
  *  Function:
  *      char* GetImageRGBDataStreamFunc(ImageInfoStruct sImageInfo,
@@ -126,12 +148,11 @@ DLLGetImageDataRoiFunc GetImageDataRoi;
  *
  */
 typedef char* (*DLLGetImageRGBDataStreamFunc)(ImageInfoStruct*, float, KFB_INT32, KFB_INT32, KFB_INT32*, KFB_INT32*, KFB_INT32*, BYTE**);
-DLLGetImageRGBDataStreamFunc GetImageRGBDataStream;
 
 
 
 
-// !Create the functionType of DeleteImageDataFunc
+// !Declare the functionType of DeleteImageDataFunc
 /*
  *  Function:
  *      int DeleteImageDataFunc(LPVOID pImageData)
@@ -140,12 +161,12 @@ DLLGetImageRGBDataStreamFunc GetImageRGBDataStream;
  *
  */
 typedef int (*DLLDeleteImageDataFunc)(LPVOID);
-DLLDeleteImageDataFunc DeleteImageData;
 
 
 
 
-// !Create the functionType of UnInitImageFileFunc
+
+// !Declare the functionType of UnInitImageFileFunc
 /*
  *  Function:
  *      int UnInitImageFileFunc(ImageInfoStruct* sImageInfo)
@@ -154,6 +175,6 @@ DLLDeleteImageDataFunc DeleteImageData;
  *
  */
 typedef int (*DLLUnInitImageFileFunc)(ImageInfoStruct*);
-DLLUnInitImageFileFunc UnInitImageFile;
 
-#endif //KFB_CONVERT_KFB_H
+
+#endif //KFB_CONVERT_TIFF_KFB_H

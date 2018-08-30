@@ -1,28 +1,8 @@
-// !Created by babiking@sensetime on May 10th, 2018 to write original RGB byte stream into .tiff file...
+// !Created by babiking on May 10th, 2018 to write original RGB byte stream into .tiff file...
 
 #include "write_RGB_to_TIFF.h"
 
-int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int nDataLength, int nHeightTiles, int nWidthTiles, int nTileHeight, int nTileWidth){
-
-    /*
-     *  Function:
-     *      int _write_RGB_to_TIFF(unsigned char** RGB_stream,
-     *                             const char TIFF_filename,
-     *                             int nDataLength,
-     *                             int nHeight,
-     *                             int nWidth)
-     *  Input:
-     *      [1] <unsigned char**> RGB_stream:    original RGB byte stream
-     *      [2] <const char*>     TIFF_filename
-     *      [3] <int>             nDataLength:   number of bytes in RGB byte stream
-     *      [4] <int>             nImageHeight:  height of Image
-     *      [5] <int>             nImageWidth:   width  of Image
-     *      [6] <int>             nTileHeight:   height of Tile i.e. blockSize
-     *      [7] <int>             nTileWidth:    width of Tile
-     *  Output:
-     *      [1] <int>             retFlag: 0-write success, 1-write fail
-     *
-     */
+void write_rgb_to_tiff(const char* tiffFilename, unsigned char* pRgbStream, int nRgbBytes, TileIdxStruct tileIdx){
 
     // !LIBTIFF image data is by default returned as ABGR pixels (A: alpha channel)
     //          packed into 32-bit words (8-bits per sample)
@@ -38,12 +18,12 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
      *          c. SamplePackaged: Contiguously or Separately (all the tiles for sample_0 appear before that of sample_1)
      *
      */
-    clock_t startTime, endTime;
-    double  runTime;
+    clock_t start, stop;
+    double  runtime;
 
-    startTime = clock();
+    start = clock();
 
-    TIFF* TIFF_file = TIFFOpen(TIFF_filename, "wb+");
+    TIFF *fp = TIFFOpen(tiffFilename, "wb+");
 
     // !Samples per pixel
     int SPP = 3;
@@ -52,43 +32,41 @@ int _write_RGB_to_TIFF(unsigned char* RGB_stream, const char* TIFF_filename, int
     int BPP = 8;
 
     // !Set .TIFF file attributes
-    TIFFSetField(TIFF_file, TIFFTAG_IMAGEWIDTH,      nWidthTiles*nTileWidth);
-    TIFFSetField(TIFF_file, TIFFTAG_IMAGELENGTH,     nHeightTiles*nTileHeight);
-    TIFFSetField(TIFF_file, TIFFTAG_TILELENGTH,      nTileHeight);
-    TIFFSetField(TIFF_file, TIFFTAG_TILEWIDTH,       nTileWidth);
-    TIFFSetField(TIFF_file, TIFFTAG_PLANARCONFIG,    PLANARCONFIG_CONTIG);
-    TIFFSetField(TIFF_file, TIFFTAG_BITSPERSAMPLE,   BPP);
-    TIFFSetField(TIFF_file, TIFFTAG_SAMPLESPERPIXEL, SPP);
-    TIFFSetField(TIFF_file, TIFFTAG_COMPRESSION,     COMPRESSION_NONE);
+    TIFFSetField(fp, TIFFTAG_IMAGEWIDTH,      tileIdx.imageWidth);
+    TIFFSetField(fp, TIFFTAG_IMAGELENGTH,     tileIdx.imageHeight);
+    TIFFSetField(fp, TIFFTAG_TILELENGTH,      tileIdx.tileHeight);
+    TIFFSetField(fp, TIFFTAG_TILEWIDTH,       tileIdx.tileWidth);
+    TIFFSetField(fp, TIFFTAG_PLANARCONFIG,    PLANARCONFIG_CONTIG);
+    TIFFSetField(fp, TIFFTAG_BITSPERSAMPLE,   BPP);
+    TIFFSetField(fp, TIFFTAG_SAMPLESPERPIXEL, SPP);
+    TIFFSetField(fp, TIFFTAG_COMPRESSION,     COMPRESSION_NONE);
 
     // TIFFSetField(TIFF_file, TIFFTAG_ROWSPERSTRIP, nImageHeight);
-    TIFFSetField(TIFF_file, TIFFTAG_PHOTOMETRIC,  PHOTOMETRIC_RGB);
-    TIFFSetField(TIFF_file, TIFFTAG_FILLORDER,    FILLORDER_MSB2LSB);
+    TIFFSetField(fp, TIFFTAG_PHOTOMETRIC,  PHOTOMETRIC_RGB);
+    TIFFSetField(fp, TIFFTAG_FILLORDER,    FILLORDER_MSB2LSB);
     // TIFFSetField(TIFF_file, TIFFTAG_XRESOLUTION, 1);
     // TIFFSetField(TIFF_file, TIFFTAG_YRESOLUTION, 1);
     // TIFFSetField(TIFF_file, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
 
-    int nTileIndex;
-    for(int th=0; th<nHeightTiles; th++)
-        for(int tw=0; tw<nWidthTiles; tw++){
+    // check if imageDim % tileDim == 0
+    assert(tileIdx.imageWidth % tileIdx.tileWidth == 0);
+    assert(tileIdx.imageHeight % tileIdx.tileHeight == 0);
 
-            nTileIndex = tw*nHeightTiles + th;
+    int tileWidthDim = tileIdx.imageWidth / tileIdx.tileWidth;
+    int tileHeightDim = tileIdx.imageHeight / tileIdx.tileHeight;
 
-            // !Write into .tiff file in tile-orientation
-            TIFFWriteRawTile(TIFF_file, nTileIndex, RGB_stream+nTileIndex*(nDataLength), nDataLength);
+    int nTileIdx = tileIdx.x + tileIdx.y * tileWidthDim;
 
-    }
+    // write into .tiff file in tile-orientation
+    TIFFWriteRawTile(fp, nTileIdx, pRgbStream+nTileIdx*nRgbBytes, nRgbBytes);
 
+    _TIFFfree(pRgbStream);
+    TIFFClose(fp);
 
-    _TIFFfree(RGB_stream);
-    TIFFClose(TIFF_file);
+    stop = clock();
+    runtime = double(stop - start) / (CLOCKS_PER_SEC);
 
-    endTime = clock();
-    runTime = double(endTime - startTime) / (CLOCKS_PER_SEC);
-
-    printf("!Runtime to write tiles into .tiff file is %f.\n", runTime);
-
-    return 0;
+    printf("Elapsed time to write No.%d tile: %f seconds.\n", nTileIdx, runtime);
 
 }
 
