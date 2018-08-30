@@ -8,12 +8,12 @@
  * gflags: https://github.com/gflags/gflags
 
  ## Make
- git clone https://github.com/babiking/KFB_Convert_TIFF.git
- cd KFB_Convert_TIFF
- mkdir build
- cd build
- cmake -DGFlags_DIR=path_to_gflags/gflags/build/ ..
- make
+ * git clone https://github.com/babiking/KFB_Convert_TIFF.git
+ * cd KFB_Convert_TIFF
+ * mkdir build 
+ * cd build
+ * cmake -DGFlags_DIR=path_to_gflags/gflags/build/ ..
+ * make
  
  ## Usage
  ./read_rgb_from_kfb --mode 0 --kfb abs_path_to_your_kfb_file --dll abs_path_to_KFB_LIB --save path_to_save_jpg_or_tiff
